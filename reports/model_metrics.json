@@ -1,0 +1,95 @@
+{
+  "train_rows": 210000,
+  "test_rows": 70000,
+  "features": [
+    "latency_ms",
+    "jitter_ms",
+    "loss_pct",
+    "avail_bw_mbps",
+    "hop_count",
+    "bottleneck_capacity_mbps",
+    "latency_delta_ms",
+    "loss_delta_pct",
+    "avail_bw_delta_mbps"
+  ],
+  "rf_params": {
+    "n_estimators": 150,
+    "max_depth": 16,
+    "min_samples_leaf": 20,
+    "max_features": 0.6,
+    "random_state": 42
+  },
+  "cv": {
+    "folds": [
+      {
+        "r2": 0.9072576449137244,
+        "mae": 5.0098451054698065,
+        "rmse": 11.18441376188262
+      },
+      {
+        "r2": 0.9019701611596763,
+        "mae": 4.945932509842793,
+        "rmse": 11.074831445690538
+      },
+      {
+        "r2": 0.9281810772560336,
+        "mae": 3.8471938577926346,
+        "rmse": 9.909609357572126
+      },
+      {
+        "r2": 0.9129635295371903,
+        "mae": 4.446648221758616,
+        "rmse": 10.720975650968311
+      },
+      {
+        "r2": 0.9105666396191908,
+        "mae": 4.24789473053497,
+        "rmse": 9.872690357559934
+      }
+    ],
+    "r2_mean": 0.912187810497163,
+    "r2_std": 0.008805923089932204,
+    "mae_mean": 4.499502885079764
+  },
+  "train_seconds": 13.84,
+  "predict_ms_per_path": 0.002,
+  "test": {
+    "random_forest": {
+      "r2": 0.8970312422958717,
+      "mae": 4.6947443616415825,
+      "rmse": 10.768268858422573
+    },
+    "linear_regression": {
+      "r2": 0.7858453365727087,
+      "mae": 10.295816491581085,
+      "rmse": 15.529480287438112
+    },
+    "measured_score_formula": {
+      "r2": 0.8758434538334977,
+      "mae": 5.562411373083701,
+      "rmse": 11.8243687538345
+    }
+  },
+  "feature_importance": {
+    "latency_ms": 0.524366470520382,
+    "jitter_ms": 0.27652083394527466,
+    "avail_bw_mbps": 0.1157457395648481,
+    "loss_pct": 0.057343469333313975,
+    "bottleneck_capacity_mbps": 0.011385420015928393,
+    "avail_bw_delta_mbps": 0.006683347942731673,
+    "latency_delta_ms": 0.004536641465706787,
+    "loss_delta_pct": 0.00266837954714132,
+    "hop_count": 0.0007496976646732021
+  },
+  "permutation_importance": {
+    "latency_ms": 0.27456439399577587,
+    "avail_bw_mbps": 0.18712738924457145,
+    "loss_pct": 0.06057227565533576,
+    "jitter_ms": 0.04267080206958247,
+    "avail_bw_delta_mbps": 0.009330441319004424,
+    "bottleneck_capacity_mbps": 0.005264859610434725,
+    "latency_delta_ms": 0.0033281102403286632,
+    "loss_delta_pct": 0.0008092215302224481,
+    "hop_count": 0.00014484770845377693
+  }
+}

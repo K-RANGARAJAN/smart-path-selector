@@ -7,5 +7,5 @@ package-lock.json
 .DS_Store
 data/*.csv
 models/*.joblib
-*.pdf
+/*.pdf
 slide-*.jpg
