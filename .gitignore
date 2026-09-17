@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+package-lock.json
+.DS_Store
+data/*.csv
+models/*.joblib
+*.pdf
+slide-*.jpg
