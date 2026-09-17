@@ -102,6 +102,17 @@ def cmd_dashboard(args) -> None:
     app.run(host="127.0.0.1", port=args.port, debug=False, threaded=True)
 
 
+def cmd_export_site(args) -> None:
+    from .site import build
+
+    out = Path(args.out)
+    full = json.loads((REPORTS / "model_metrics.json").read_text())["test"]["random_forest"]
+    result = build(out, pd.read_csv(DATA / "train.csv"), pd.read_csv(DATA / "test.csv"), full)
+    (out.parent / "site_parity.json").write_text(json.dumps(result["fixture"]))
+    size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
+    print(f"Static site -> {out} ({size / 1e6:.1f} MB); web model test metrics {result['web_metrics']}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="smartpath")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -132,6 +143,10 @@ def main() -> None:
     d.add_argument("--port", type=int, default=8050)
     d.add_argument("--seed", type=int, default=7)
     d.set_defaults(func=cmd_dashboard)
+
+    x = sub.add_parser("export-site", help="build the browser-only dashboard for static hosting")
+    x.add_argument("--out", default=str(ROOT / "build" / "site"))
+    x.set_defaults(func=cmd_export_site)
 
     args = parser.parse_args()
     args.func(args)

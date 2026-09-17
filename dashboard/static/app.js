@@ -20,6 +20,7 @@
   let topo = null, snap = null, playing = false, timer = null, busy = false;
 
   async function api(path, body) {
+    if (window.SmartPathLocal) return window.SmartPathLocal.request(path, body);
     const opts = body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {};
     const r = await fetch(path, opts);
     if (!r.ok) throw new Error(await r.text());
@@ -198,6 +199,10 @@
   }
 
   async function init() {
+    if (window.SMARTPATH_STATIC) {
+      const data = await fetch("data.json").then(r => r.json());
+      window.SmartPathLocal = window.SmartPathSim.createLocalApi(data, 7);
+    }
     topo = await api("/api/topology");
     $("flow").innerHTML = topo.flows.map(f => `<option value="${f}">${f.replace("->", " → ")}</option>`).join("");
     drawTopology();

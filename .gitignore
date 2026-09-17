@@ -10,3 +10,4 @@ models/*.joblib
 /*.pdf
 slide-*.jpg
 .claude/
+build/

@@ -12,7 +12,7 @@
       <span class="logo" aria-hidden="true"></span>
       <div>
         <h1>Smart Path Selector</h1>
-        <p>ML routing vs RIP · OSPF · BGP on live simulated traffic</p>
+        <p>ML routing vs RIP · OSPF · BGP on live simulated traffic{% if static_site %} · runs in your browser · <a href="https://github.com/K-RANGARAJAN/smart-path-selector">source &amp; report</a>{% endif %}</p>
       </div>
     </div>
     <div class="controls">
@@ -82,6 +82,15 @@
       </div>
     </section>
   </main>
+  {% if static_site %}
+  <footer class="site-note">
+    Everything runs client-side: the network simulator and a compact Random Forest ({{ web_metrics.r2 | round(3) }} R², {{ web_metrics.mae | round(1) }} MAE on unseen traffic)
+    exported from the Python project. Traffic is synthetic. Full results in the
+    <a href="https://github.com/K-RANGARAJAN/smart-path-selector/blob/main/docs/Final_Report.md">final report</a>.
+  </footer>
+  <script>window.SMARTPATH_STATIC = true;</script>
+  <script src="sim.js"></script>
+  {% endif %}
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

@@ -7,6 +7,9 @@ policy). They cannot see congestion, packet loss or jitter. This project trains 
 Random Forest on measured path metrics to predict each candidate path's quality in
 the next interval, and routes on that prediction.
 
+**Live demo: https://k-rangarajan.github.io/smart-path-selector/** runs the simulator and a
+compact version of the model entirely in your browser.
+
 ![Dashboard](docs/images/dashboard.png)
 
 ## Results
@@ -44,13 +47,19 @@ python -m smartpath train        # train the Random Forest → models/, reports/
 python -m smartpath evaluate     # routing comparison + congestion drill → reports/
 python -m smartpath dashboard    # live dashboard on http://127.0.0.1:8050
 python -m smartpath validate validation/packet_tracer/sample_scenario   # score Packet Tracer measurements
-pytest                           # 31 tests
+pytest                           # 32 tests
 ```
 
 `generate` and `train` take about a minute each, `evaluate` about two. The model
 file is not committed; `train` recreates it.
 
 ### Dashboard
+
+The hosted demo is a browser-only build of the same dashboard. `smartpath/site.py`
+exports the topology and a 40-tree Random Forest (R² 0.896 on unseen traffic,
+against 0.897 for the full model) to JSON, and `dashboard/static/sim.js` runs the
+simulation in JavaScript. `tools/check_site.js` checks the port against Python
+outputs. Rebuild and publish with `tools/deploy_site.sh`.
 
 - **Play / Step**: advance the simulation. Every strategy routes the same traffic.
 - **Flow** and **Compare with**: choose which flow and which protocol to overlay
