@@ -9,3 +9,4 @@ data/*.csv
 models/*.joblib
 /*.pdf
 slide-*.jpg
+.claude/

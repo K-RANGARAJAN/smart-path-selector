@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Path Selector · Live</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="bar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Smart Path Selector</h1>
+        <p>ML routing vs RIP · OSPF · BGP on live simulated traffic</p>
+      </div>
+    </div>
+    <div class="controls">
+      <label>Flow
+        <select id="flow"></select>
+      </label>
+      <label>Compare with
+        <select id="compare">
+          <option>OSPF</option><option>BGP</option><option>RIP</option><option>Greedy measured</option>
+        </select>
+      </label>
+      <label>Speed
+        <select id="speed">
+          <option value="900">Slow</option><option value="400" selected>Normal</option><option value="120">Fast</option>
+        </select>
+      </label>
+      <button id="play" class="primary" type="button">Play</button>
+      <button id="step" type="button">Step</button>
+      <button id="reset" type="button" title="Restart with new random traffic">Reset</button>
+      <div class="tick"><span>Tick</span><strong id="tick">–</strong></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card topo">
+      <div class="card-head">
+        <h2>Network</h2>
+        <div class="head-actions">
+          <button id="congest-backbone" class="warn" type="button">Congest AS200 backbone</button>
+          <span class="hint">or click any link</span>
+        </div>
+      </div>
+      <svg id="topology" viewBox="0 0 1000 560" role="img" aria-label="Network topology with link utilisation"></svg>
+      <div class="legend">
+        <span><i class="swatch ml"></i>ML route</span>
+        <span><i class="swatch cmp"></i><em id="cmp-name">OSPF</em> route</span>
+        <span class="scale">Link load <i class="grad"></i> 0% → 100%</span>
+        <span><i class="pulse"></i>congestion episode</span>
+      </div>
+    </section>
+
+    <section class="card board">
+      <div class="card-head"><h2>Realised quality</h2><span class="hint">this tick · session mean · time below <b id="poor-th">60</b></span></div>
+      <div id="scoreboard"></div>
+    </section>
+
+    <section class="card chart">
+      <div class="card-head"><h2>Quality over time</h2><div id="chart-legend" class="chart-legend"></div></div>
+      <canvas id="chart" height="220"></canvas>
+    </section>
+
+    <section class="card events">
+      <div class="card-head"><h2>Events</h2></div>
+      <ol id="events"></ol>
+    </section>
+
+    <section class="card paths">
+      <div class="card-head"><h2>Candidate paths</h2><span class="hint">measured now → model prediction → what actually happened next tick</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Path</th><th class="num">Latency ms</th><th class="num">Jitter ms</th><th class="num">Loss %</th>
+            <th class="num">Free bw Mbps</th><th class="num">Hops</th><th class="num">Predicted</th><th class="num">Actual</th><th>Chosen by</th>
+          </tr></thead>
+          <tbody id="candidates"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

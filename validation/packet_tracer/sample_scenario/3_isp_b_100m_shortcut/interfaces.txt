@@ -1,0 +1,6 @@
+R8#show interfaces FastEthernet0/0
+FastEthernet0/0 is up, line protocol is up (connected)
+  Hardware is Lance, address is 0090.2b5c.7d00 (bia 0090.2b5c.7d00)
+  Internet address is 10.0.80.8/30
+  MTU 1500 bytes, BW 100000 Kbit, DLY 100 usec,
+     reliability 255/255, txload 112/255, rxload 90/255

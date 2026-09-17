@@ -54,6 +54,54 @@ def cmd_train(args) -> None:
     print(json.dumps({k: report[k] for k in ("test", "cv") if k in report}, indent=2))
 
 
+def cmd_evaluate(args) -> None:
+    from . import figures
+    from .evaluate import congestion_drill, run, summarise
+    from .model import load
+
+    model = load(MODELS / "path_quality_rf.joblib")
+    trace = run(model, ticks=args.ticks, seed=args.seed, margin=args.margin)
+    summary = summarise(trace)
+    REPORTS.mkdir(exist_ok=True)
+    FIGURES.mkdir(parents=True, exist_ok=True)
+    summary.round(3).to_csv(REPORTS / "routing_comparison.csv")
+    per_pair = trace.groupby(["pair", "strategy"]).score.mean().unstack()[summary.index]
+    per_pair.round(2).to_csv(REPORTS / "routing_by_flow.csv")
+    figures.strategy_bars(summary, "mean_quality", "Mean realised quality (0-100)", FIGURES / "routing_quality.png")
+    figures.strategy_bars(summary, "poor_quality_pct", f"% of time below quality 60", FIGURES / "routing_poor_time.png")
+    window = trace[(trace.pair == "R1->R12") & (trace.tick < trace.tick.min() + 400)]
+    figures.timeline(window, FIGURES / "routing_timeline.png", ["ML (Random Forest)", "OSPF", "BGP", "RIP"])
+    drill = congestion_drill(model)
+    (REPORTS / "congestion_drill.json").write_text(json.dumps(drill, indent=2))
+    pd.set_option("display.width", 200)
+    print(summary.round(2))
+    print()
+    print(per_pair.round(1))
+    print()
+    print(json.dumps(drill, indent=2))
+
+
+def cmd_validate(args) -> None:
+    from .model import load
+    from .packet_tracer import score_scenario
+
+    model = load(MODELS / "path_quality_rf.joblib")
+    df = score_scenario(Path(args.scenario), model)
+    pd.set_option("display.width", 200)
+    cols = ["path", "latency_ms", "jitter_ms", "loss_pct", "avail_bw_mbps", "hop_count", "formula_score", "predicted_score", "recommended"]
+    print(df[cols].round(2).to_string(index=False))
+    if args.out:
+        df.round(3).to_csv(args.out, index=False)
+
+
+def cmd_dashboard(args) -> None:
+    from dashboard.app import create_app
+
+    app = create_app(MODELS / "path_quality_rf.joblib", seed=args.seed)
+    print(f"Dashboard on http://127.0.0.1:{args.port}")
+    app.run(host="127.0.0.1", port=args.port, debug=False, threaded=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="smartpath")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -68,6 +116,22 @@ def main() -> None:
     t = sub.add_parser("train", help="train the Random Forest and write metrics")
     t.add_argument("--no-cv", action="store_true", help="skip time-blocked cross-validation")
     t.set_defaults(func=cmd_train)
+
+    e = sub.add_parser("evaluate", help="closed-loop routing comparison against RIP/OSPF/BGP")
+    e.add_argument("--ticks", type=int, default=2000)
+    e.add_argument("--seed", type=int, default=3, help="traffic seed; 1 and 2 are the training/test datasets")
+    e.add_argument("--margin", type=float, default=None, help="hysteresis margin in quality points")
+    e.set_defaults(func=cmd_evaluate)
+
+    v = sub.add_parser("validate", help="score Packet Tracer ping/tracert measurements with the model")
+    v.add_argument("scenario", help="folder with one sub-folder per measured path")
+    v.add_argument("--out", help="write the scored table to this CSV")
+    v.set_defaults(func=cmd_validate)
+
+    d = sub.add_parser("dashboard", help="run the live dashboard")
+    d.add_argument("--port", type=int, default=8050)
+    d.add_argument("--seed", type=int, default=7)
+    d.set_defaults(func=cmd_dashboard)
 
     args = parser.parse_args()
     args.func(args)

@@ -1,0 +1,28 @@
+{
+  "link": "R5-R6",
+  "flow": "R1->R12",
+  "runs": 20,
+  "duration_ticks": 40,
+  "peak_added_utilisation": 0.6,
+  "mean_quality_during_event": {
+    "ML (Random Forest)": 95.92371714701139,
+    "Greedy measured": 95.73234153026223,
+    "OSPF": 28.723521837080398,
+    "BGP": 55.82845106807739,
+    "RIP": 43.84027585487631,
+    "Oracle": 96.6141296899321
+  },
+  "poor_quality_pct_during_event": {
+    "ML (Random Forest)": 1.375,
+    "Greedy measured": 1.5,
+    "OSPF": 79.875,
+    "BGP": 46.5,
+    "RIP": 81.5,
+    "Oracle": 0.625
+  },
+  "ml_runs_on_link_at_injection": 3,
+  "ml_ticks_to_leave_link": {
+    "mean": 3.3333333333333335,
+    "max": 4
+  }
+}

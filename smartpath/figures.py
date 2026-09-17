@@ -43,8 +43,21 @@ def predicted_vs_actual(y_true, y_pred, path: Path) -> None:
     plt.close(fig)
 
 
+FEATURE_LABELS = {
+    "latency_ms": "Latency",
+    "jitter_ms": "Jitter",
+    "loss_pct": "Packet loss",
+    "avail_bw_mbps": "Available bandwidth",
+    "hop_count": "Hop count",
+    "bottleneck_capacity_mbps": "Bottleneck capacity",
+    "latency_delta_ms": "Latency trend",
+    "loss_delta_pct": "Loss trend",
+    "avail_bw_delta_mbps": "Bandwidth trend",
+}
+
+
 def feature_importance(importance: dict[str, float], path: Path) -> None:
-    items = sorted(importance.items(), key=lambda kv: kv[1])
+    items = sorted(((FEATURE_LABELS.get(k, k), v) for k, v in importance.items()), key=lambda kv: kv[1])
     fig, ax = plt.subplots(figsize=(6, 3.8), dpi=160)
     ax.barh([k for k, _ in items], [v for _, v in items], color=ML, height=0.6)
     ax.set_xlabel("Permutation importance (drop in R²)", color=INK)
@@ -75,11 +88,13 @@ def timeline(trace: pd.DataFrame, path: Path, strategies: list[str]) -> None:
     fig, ax = plt.subplots(figsize=(9, 3.4), dpi=160)
     for s in strategies:
         series = trace[trace.strategy == s].set_index("tick")["score"].rolling(5, min_periods=1).mean()
-        ax.plot(series.index, series.values, label=s, color=COLORS.get(s, MUTED), linewidth=1.4 if s.startswith("ML") else 1.0)
+        is_ml = s.startswith("ML")
+        ax.plot(series.index, series.values, label=s, color=COLORS.get(s, MUTED),
+                linewidth=2.2 if is_ml else 1.0, zorder=3 if is_ml else 2)
     ax.set_xlabel("Tick", color=INK)
     ax.set_ylabel("Realised quality (5-tick mean)", color=INK)
-    ax.set_ylim(0, 100)
-    ax.legend(frameon=False, fontsize=8, ncol=len(strategies), loc="lower left")
+    ax.set_ylim(0, 102)
+    ax.legend(frameon=False, fontsize=8, ncol=len(strategies), loc="lower center", bbox_to_anchor=(0.5, 1.0))
     _style(ax)
     fig.tight_layout()
     fig.savefig(path)

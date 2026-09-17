@@ -1,0 +1,19 @@
+C:\>ping -n 10 10.0.12.10
+
+Pinging 10.0.12.10 with 32 bytes of data:
+
+Reply from 10.0.12.10: bytes=32 time=36ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=38ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=35ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=41ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=37ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=36ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=39ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=35ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=38ms TTL=251
+Reply from 10.0.12.10: bytes=32 time=37ms TTL=251
+
+Ping statistics for 10.0.12.10:
+    Packets: Sent = 10, Received = 10, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 35ms, Maximum = 41ms, Average = 37ms

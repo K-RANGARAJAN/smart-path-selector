@@ -1,0 +1,12 @@
+R4#show interfaces GigabitEthernet0/2
+GigabitEthernet0/2 is up, line protocol is up (connected)
+  Hardware is CN Gigabit Ethernet, address is 0001.4213.5a02 (bia 0001.4213.5a02)
+  Internet address is 10.0.49.4/30
+  MTU 1500 bytes, BW 1000000 Kbit, DLY 10 usec,
+     reliability 255/255, txload 118/255, rxload 96/255
+R9#show interfaces GigabitEthernet0/1
+GigabitEthernet0/1 is up, line protocol is up (connected)
+  Hardware is CN Gigabit Ethernet, address is 0001.4213.6b01 (bia 0001.4213.6b01)
+  Internet address is 10.0.91.9/30
+  MTU 1500 bytes, BW 1000000 Kbit, DLY 10 usec,
+     reliability 255/255, txload 127/255, rxload 110/255

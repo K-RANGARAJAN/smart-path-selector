@@ -1,0 +1,12 @@
+C:\>tracert 10.0.12.10
+
+Tracing route to 10.0.12.10 over a maximum of 30 hops: 
+
+  1   0 ms      0 ms      0 ms      192.168.1.1
+  2   1 ms      1 ms      0 ms      10.0.12.2
+  3   2 ms      1 ms      2 ms      10.0.24.4
+  4   10 ms     9 ms      11 ms     10.0.49.9
+  5   17 ms     18 ms     16 ms     10.0.91.10
+  6   36 ms     38 ms     35 ms     10.0.12.10
+
+Trace complete.

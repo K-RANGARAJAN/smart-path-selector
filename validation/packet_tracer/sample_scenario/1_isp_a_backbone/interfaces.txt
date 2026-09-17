@@ -1,0 +1,12 @@
+R5#show interfaces TenGigabitEthernet0/1
+TenGigabitEthernet0/1 is up, line protocol is up (connected)
+  Hardware is Lance, address is 0060.3e8a.1b01 (bia 0060.3e8a.1b01)
+  Internet address is 10.0.56.5/30
+  MTU 1500 bytes, BW 10000000 Kbit, DLY 10 usec,
+     reliability 255/255, txload 240/255, rxload 188/255
+R6#show interfaces TenGigabitEthernet0/2
+TenGigabitEthernet0/2 is up, line protocol is up (connected)
+  Hardware is Lance, address is 0060.3e8a.1c02 (bia 0060.3e8a.1c02)
+  Internet address is 10.0.67.6/30
+  MTU 1500 bytes, BW 10000000 Kbit, DLY 10 usec,
+     reliability 255/255, txload 201/255, rxload 175/255
