@@ -19,7 +19,8 @@ else
   git worktree add -q --detach "$tmp"
   git -C "$tmp" checkout -q --orphan gh-pages
 fi
-git -C "$tmp" rm -rq --ignore-unmatch .
+git -C "$tmp" rm -rq --cached --ignore-unmatch .
+git -C "$tmp" clean -fdxq
 cp -R build/site/. "$tmp"/
 git -C "$tmp" add -A
 if git -C "$tmp" diff --cached --quiet; then
