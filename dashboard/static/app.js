@@ -28,7 +28,8 @@
   }
 
   function utilColor(u) {
-    const stops = [[0, [184, 194, 201]], [0.55, [184, 194, 201]], [0.78, [224, 165, 60]], [0.95, [194, 59, 46]], [1, [194, 59, 46]]];
+    // Grey until trouble actually starts (queues build past ~70%, loss spikes near 90%).
+    const stops = [[0, [184, 194, 201]], [0.7, [184, 194, 201]], [0.85, [224, 165, 60]], [0.95, [194, 59, 46]], [1, [194, 59, 46]]];
     for (let i = 1; i < stops.length; i++) {
       if (u <= stops[i][0]) {
         const [u0, c0] = stops[i - 1], [u1, c1] = stops[i];
@@ -43,7 +44,7 @@
     const svg = $("topology");
     svg.innerHTML = "";
     const pos = Object.fromEntries(topo.routers.map(r => [r.name, [px(r.x), py(r.y)]]));
-    const layers = { as: el("g", {}, svg), links: el("g", {}, svg), paths: el("g", {}, svg), routers: el("g", {}, svg) };
+    const layers = { as: el("g", {}, svg), links: el("g", {}, svg), paths: el("g", {}, svg), markers: el("g", {}, svg), routers: el("g", {}, svg) };
     for (const as of topo.ases) {
       const pts = topo.routers.filter(r => r.asn === as.asn).map(r => pos[r.name]);
       const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
@@ -60,9 +61,15 @@
       el("line", { x1, y1, x2, y2, class: "link", "stroke-width": width, stroke: "#b8c2c9" }, g);
       const cap = el("text", { x: (x1 + x2) / 2, y: (y1 + y2) / 2 - 9, class: "cap" }, g);
       cap.textContent = { 100: "100M", 1000: "1G", 10000: "10G" }[l.capacity_mbps];
-      const title = el("title", {}, hit);
+      const title = el("title", {}, g);
       title.textContent = `${l.a}–${l.b}`;
-      hit.addEventListener("click", () => congest(l.a, l.b));
+      // Badges sit on their own layer so crossing links never cover them.
+      const mid = el("g", { class: "jam-marker", "data-marker": `${l.a}-${l.b}`, transform: `translate(${(x1 + x2) / 2},${(y1 + y2) / 2})` }, layers.markers);
+      el("rect", { x: -24, y: -11, width: 48, height: 22, rx: 11 }, mid);
+      el("text", { x: 0, y: 1 }, mid);
+      mid.style.display = "none";
+      // The whole group (visible line, wide hit area, marker) is clickable.
+      g.addEventListener("click", () => congest(l.a, l.b));
     }
     for (const r of topo.routers) {
       const [x, y] = pos[r.name];
@@ -83,10 +90,13 @@
       if (!g) continue;
       const line = g.querySelector(".link");
       line.setAttribute("stroke", utilColor(l.util));
-      line.classList.toggle("congested", l.events > 0);
+      line.classList.toggle("congested", l.manual > 0);
+      const marker = svg.querySelector(`[data-marker="${l.a}-${l.b}"]`);
+      marker.style.display = l.manual > 0 ? "" : "none";
+      marker.querySelector("text").textContent = `⚡ ${l.manual}`;
       g.querySelector("title").textContent =
         `${l.a}–${l.b} · ${cap[`${l.a}-${l.b}`] >= 1000 ? cap[`${l.a}-${l.b}`] / 1000 + " Gbps" : cap[`${l.a}-${l.b}`] + " Mbps"} · load ${(l.util * 100).toFixed(0)}%` +
-        (l.events ? ` · congestion episode (${l.events} ticks left)` : "") + "\nClick to inject congestion";
+        (l.manual ? ` · your jam: ${l.manual} steps left` : l.events ? ` · random jam: ${l.events} steps left` : "") + "\nClick to jam this link";
     }
     const [src, dst] = snap.flow.split("->");
     svg.querySelectorAll(".router").forEach(g => g.classList.toggle("endpoint", g.dataset.router === src || g.dataset.router === dst));
@@ -171,6 +181,7 @@
 
   function render(s) {
     snap = s;
+    $("random-jams").checked = s.random_jams;
     $("tick").textContent = s.tick;
     updateTopology();
     updateScoreboard();
@@ -222,6 +233,10 @@
     $("congest-backbone").addEventListener("click", async () => {
       await api("/api/congest", { a: "R5", b: "R6", duration: 40, peak: 0.6, flow: flow() });
       render(await api("/api/congest", { a: "R6", b: "R7", duration: 40, peak: 0.6, flow: flow() }));
+    });
+    $("clear-jams").addEventListener("click", async () => render(await api("/api/clear", { flow: flow() })));
+    $("random-jams").addEventListener("change", async e => {
+      render(await api("/api/settings", { random_jams: e.target.checked, flow: flow() }));
     });
     $("reset").addEventListener("click", async () => {
       setPlaying(false);

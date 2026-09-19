@@ -27,17 +27,24 @@ see congestion.
 
 ## 3. Congestion drill (3 min, dashboard)
 
-1. Flow **R1 → R12**, compare with **OSPF**.
-2. Click **Congest AS200 backbone**.
-3. Within a few ticks, the backbone turns red and OSPF's quality drops toward 15.
-   OSPF keeps its route because the configured cost has not changed.
-4. The Events panel shows *ML moved to …*, and the teal band leaves the backbone.
-5. Scroll to **Candidate paths**: measured metrics, predicted score, and what
-   actually happened next tick for every path. Point out the backbone paths:
-   loss up, predicted score collapsed.
-6. Switch *Compare with* to **RIP**. It stays on the 100 Mbps link, and its free
-   bandwidth is too low for the flow.
-7. Switch the flow to **R3 → R11** to show the same behaviour on another pair.
+The dashboard starts with **Random jams off**, so nothing jams unless you click. Every
+jam you add shows a red ⚡ badge counting down from 40 steps, and the Events panel
+logs when it starts and when it clears.
+
+1. Flow **R1 → R12**, compare with **OSPF**, press **Play**. Everything is grey and
+   calm; ML and OSPF both score in the 90s.
+2. Click **Jam backbone (R5–R6–R7)**. Only those two roads turn red.
+3. OSPF's score falls to single digits within about three steps. It stays on the
+   jammed road because its configured cost hasn't changed.
+4. If ML was on the backbone, the Events panel shows *ML moved to …* and the green
+   band leaves it. If ML was already elsewhere, point out that its score never dropped.
+5. Press **Pause** and scroll to **Candidate paths**: the jammed routes show high loss
+   and low predicted scores. That's why ML avoids them.
+6. **Let the reviewer pick:** "Click any road on the green band." ML moves off it
+   within a few steps.
+7. **Clear jams** returns the network to calm for the next demonstration.
+8. Switch *Compare with* to **RIP**. It sits on the 100 Mbps link and scores badly
+   even with no jam.
 
 ## 4. Offline results (3 min, slides)
 

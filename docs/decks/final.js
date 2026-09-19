@@ -240,7 +240,7 @@ const quietChart = extra => ({
   s.addImage({ path: path.join(ROOT, "docs/images/dashboard_top.png"), x: 0.5, y: y - 0.1, w: 5.6, h: 3.6 });
   const steps = [
     ["Play", "All strategies route the same live traffic"],
-    ["Congest AS200 backbone", "Link turns red; OSPF’s quality collapses"],
+    ["Jam backbone (or click a link)", "Only that road turns red; OSPF’s quality collapses"],
     ["Watch ML reroute", "Teal route moves; event log records it"],
     ["Candidate table", "Measured → predicted → what actually happened"],
   ];

@@ -23,6 +23,9 @@ button:hover { border-color: #7fd1c7; }
 button.primary { background: var(--teal); border-color: var(--teal); min-width: 72px; }
 button.warn { background: #fff6ee; color: #9a5213; border-color: #f0c9a3; }
 button.warn:hover { border-color: var(--amber); }
+button.plain { background: #fff; color: var(--ink); border-color: var(--line); }
+button.plain:hover { border-color: var(--muted); }
+#events .cleared { color: var(--muted); }
 .tick { display: flex; flex-direction: column; font-size: 11px; color: #9fbdba; min-width: 58px; }
 .tick strong { color: #fff; font-size: 18px; font-variant-numeric: tabular-nums; }
 
@@ -40,7 +43,7 @@ main { display: grid; gap: 16px; padding: 16px 20px 24px; grid-template-columns:
 #topology .as-label { fill: var(--muted); font-size: 13px; }
 #topology .link { stroke-linecap: round; cursor: pointer; transition: stroke .3s; }
 #topology .link-hit { stroke: transparent; stroke-width: 22; cursor: pointer; }
-#topology .link-hit:hover + .link, #topology .link:hover { filter: brightness(.85); }
+#topology [data-link]:hover .link { filter: brightness(.8); }
 #topology .ml-path { fill: none; stroke: var(--ml); stroke-opacity: .42; stroke-width: 20; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 #topology .cmp-path { fill: none; stroke-width: 3.5; stroke-dasharray: 10 7; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 #topology .router circle { fill: var(--night); stroke: #fff; stroke-width: 2.5; }
@@ -54,7 +57,14 @@ main { display: grid; gap: 16px; padding: 16px 20px 24px; grid-template-columns:
 .swatch { display: inline-block; width: 22px; height: 8px; border-radius: 4px; }
 .swatch.ml { background: rgba(11, 122, 117, .5); }
 .swatch.cmp { height: 0; border-top: 3px dashed var(--ospf); border-radius: 0; }
-.grad { display: inline-block; width: 70px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #b8c2c9, #b8c2c9 55%, #e0a53c 78%, #c23b2e); }
+.grad { display: inline-block; width: 70px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #b8c2c9, #b8c2c9 70%, #e0a53c 85%, #c23b2e 95%); }
+.controls label.toggle { flex-direction: row; align-items: center; gap: 6px; color: #fff; font-size: 13px; padding-bottom: 6px; cursor: pointer; }
+.controls label.toggle input { accent-color: #7fd1c7; width: 15px; height: 15px; margin: 0; }
+#topology [data-link] { cursor: pointer; }
+#topology .jam-marker rect { fill: #c23b2e; }
+#topology .jam-marker text { fill: #fff; font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+#topology .jam-marker { pointer-events: none; }
+.jam-chip { font-style: normal; background: #c23b2e; color: #fff; font-weight: 700; font-size: 11px; border-radius: 9px; padding: 1px 7px; }
 .pulse { width: 10px; height: 10px; border-radius: 50%; background: #c23b2e; animation: pulse 1s infinite; display: inline-block; }
 
 .row { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }

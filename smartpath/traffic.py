@@ -22,6 +22,7 @@ class CongestionEvent:
     remaining: int
     duration: int
     peak: float
+    manual: bool = False  # injected by hand rather than arising at random
 
     def boost(self) -> float:
         elapsed = self.duration - self.remaining
@@ -46,6 +47,8 @@ class TrafficModel:
     def __init__(self, specs: list[LinkSpec], rng: np.random.Generator):
         self.rng = rng
         self.tick = 0
+        self.random_events = True
+        self.ended_manual: list[tuple[str, str]] = []  # links whose injected jam ended on the last step
         self.links = {
             s.key: LinkTraffic(spec=s, phase=rng.uniform(0, 0.25), level=s.base_util)
             for s in specs
@@ -59,19 +62,40 @@ class TrafficModel:
         return out
 
     def inject(self, key: tuple[str, str], duration: int = 40, peak: float = 0.5) -> None:
-        self.links[key].events.append(CongestionEvent(duration, duration, peak))
+        self.links[key].events.append(CongestionEvent(duration, duration, peak, manual=True))
+
+    def clear_manual(self) -> list[tuple[str, str]]:
+        """Remove every injected episode; returns the links that had one."""
+        cleared = []
+        for key, lt in self.links.items():
+            if any(e.manual for e in lt.events):
+                cleared.append(key)
+                lt.events = [e for e in lt.events if not e.manual]
+        return cleared
+
+    def set_random_events(self, enabled: bool) -> None:
+        """Turn spontaneous congestion episodes on or off. Turning them off also
+        clears the ones in progress; injected episodes are kept."""
+        self.random_events = enabled
+        if not enabled:
+            for lt in self.links.values():
+                lt.events = [e for e in lt.events if e.manual]
 
     def step(self) -> dict[tuple[str, str], float]:
         self.tick += 1
+        self.ended_manual = []
         day = 2 * math.pi * self.tick / TICKS_PER_DAY
-        for lt in self.links.values():
+        for key, lt in self.links.items():
             s = lt.spec
             target = s.base_util + self.DAILY_AMPLITUDE * math.sin(day + 2 * math.pi * lt.phase)
             lt.level = target + self.PHI * (lt.level - target) + self.rng.normal(0, self.NOISE)
             for e in lt.events:
                 e.remaining -= 1
+            had_manual = any(e.manual for e in lt.events)
             lt.events = [e for e in lt.events if e.remaining > 0]
-            if self.rng.random() < s.event_rate:
+            if had_manual and not any(e.manual for e in lt.events):
+                self.ended_manual.append(key)
+            if self.rng.random() < s.event_rate and self.random_events:
                 duration = int(self.rng.integers(10, 60))
                 lt.events.append(CongestionEvent(duration, duration, float(self.rng.uniform(0.25, 0.6))))
         return self.utilisation()

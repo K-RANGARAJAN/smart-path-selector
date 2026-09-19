@@ -32,5 +32,47 @@ def test_tick_advances_and_reports_all_strategies(client):
 
 def test_congestion_injection(client):
     snap = client.post("/api/congest", json={"a": "R6", "b": "R5"}).get_json()
-    assert next(l for l in snap["links"] if (l["a"], l["b"]) == ("R5", "R6"))["events"] > 0
+    link = next(l for l in snap["links"] if (l["a"], l["b"]) == ("R5", "R6"))
+    assert link["manual"] == 40 and link["events"] >= 40
     assert client.post("/api/congest", json={"a": "R1", "b": "R12"}).status_code == 400
+
+
+def test_demo_default_has_no_random_jams(client):
+    snap = client.post("/api/reset", json={"seed": 5}).get_json()
+    assert snap["random_jams"] is False
+    for _ in range(10):
+        snap = client.post("/api/tick", json={"n": 20}).get_json()
+        assert all(l["events"] == 0 for l in snap["links"])
+
+
+def test_jam_lifecycle_is_reported(client):
+    client.post("/api/reset", json={"seed": 5})
+    client.post("/api/congest", json={"a": "R4", "b": "R9", "duration": 5})
+    snap = client.post("/api/tick", json={"n": 6}).get_json()
+    assert any(e["text"] == "Jam on R4–R9 has cleared" for e in snap["events"])
+    client.post("/api/congest", json={"a": "R5", "b": "R6"})
+    snap = client.post("/api/clear", json={}).get_json()
+    assert all(l["manual"] == 0 for l in snap["links"])
+    assert snap["events"][0]["text"] == "Cleared jams on R5–R6"
+
+
+def test_events_only_show_selected_flow(client):
+    client.post("/api/settings", json={"random_jams": True})
+    snap = client.post("/api/tick", json={"n": 50, "flow": "R3->R11"}).get_json()
+    assert all(e.get("flow") in (None, "R3->R11") for e in snap["events"])
+    client.post("/api/settings", json={"random_jams": False})
+
+
+def test_random_jams_toggle_keeps_manual_jams(client):
+    client.post("/api/settings", json={"random_jams": True})
+    client.post("/api/tick", json={"n": 30})
+    client.post("/api/congest", json={"a": "R8", "b": "R10"})
+    snap = client.post("/api/settings", json={"random_jams": False}).get_json()
+    assert snap["random_jams"] is False
+    assert all(l["events"] == l["manual"] for l in snap["links"])
+    assert next(l for l in snap["links"] if (l["a"], l["b"]) == ("R10", "R8"))["manual"] > 0
+    for _ in range(5):
+        snap = client.post("/api/tick", json={"n": 20}).get_json()
+        assert all(l["events"] == l["manual"] for l in snap["links"])
+    assert client.post("/api/reset", json={"seed": 3}).get_json()["random_jams"] is False
+    client.post("/api/settings", json={"random_jams": True})

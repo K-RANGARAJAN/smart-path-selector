@@ -47,7 +47,7 @@ python -m smartpath train        # train the Random Forest → models/, reports/
 python -m smartpath evaluate     # routing comparison + congestion drill → reports/
 python -m smartpath dashboard    # live dashboard on http://127.0.0.1:8050
 python -m smartpath validate validation/packet_tracer/sample_scenario   # score Packet Tracer measurements
-pytest                           # 32 tests
+pytest                           # 36 tests
 ```
 
 `generate` and `train` take about a minute each, `evaluate` about two. The model
@@ -64,8 +64,12 @@ outputs. Rebuild and publish with `tools/deploy_site.sh`.
 - **Play / Step**: advance the simulation. Every strategy routes the same traffic.
 - **Flow** and **Compare with**: choose which flow and which protocol to overlay
   against the ML route.
-- **Congest AS200 backbone**, or click any link: inject a congestion episode and
-  watch the ML route move while static protocols stay put.
+- **Jam backbone (R5–R6–R7)**, or click any link: jam it for 40 steps (marked ⚡ with
+  a countdown) and watch the ML route move while static protocols stay put.
+  **Clear jams** ends them early.
+- **Random jams** (off by default): when on, the simulator also creates jams by
+  itself, as in the offline evaluation. Leave it off for a demo so only your jams
+  happen.
 - **Candidate paths**: measured metrics, the model's predicted score and the quality
   the path actually delivered next tick.
 
