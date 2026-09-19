@@ -41,6 +41,19 @@
     constructor(links, K, rng) {
       this.K = K; this.rng = rng; this.tick = 0;
       this.links = new Map(links.map(s => [keyOf(s.a, s.b), { spec: s, phase: rng.uniform(0, 0.25), level: s.base_util, events: [] }]));
+      this.randomEvents = true;
+      this.endedManual = [];
+    }
+    clearManual() {
+      const cleared = [];
+      for (const [k, lt] of this.links) {
+        if (lt.events.some(e => e.manual)) { cleared.push(k); lt.events = lt.events.filter(e => !e.manual); }
+      }
+      return cleared;
+    }
+    setRandomEvents(enabled) {
+      this.randomEvents = enabled;
+      if (!enabled) for (const lt of this.links.values()) lt.events = lt.events.filter(e => e.manual);
     }
     static boost(e) {
       const elapsed = e.duration - e.remaining;
@@ -54,17 +67,20 @@
       }
       return out;
     }
-    inject(key, duration, peak) { this.links.get(key).events.push({ remaining: duration, duration, peak }); }
+    inject(key, duration, peak) { this.links.get(key).events.push({ remaining: duration, duration, peak, manual: true }); }
     step() {
       this.tick++;
+      this.endedManual = [];
       const K = this.K, day = 2 * Math.PI * this.tick / K.ticks_per_day;
-      for (const lt of this.links.values()) {
+      for (const [key, lt] of this.links) {
         const s = lt.spec;
         const target = s.base_util + K.daily_amplitude * Math.sin(day + 2 * Math.PI * lt.phase);
         lt.level = target + K.phi * (lt.level - target) + this.rng.normal(0, K.noise);
         lt.events.forEach(e => e.remaining--);
+        const hadManual = lt.events.some(e => e.manual);
         lt.events = lt.events.filter(e => e.remaining > 0);
-        if (this.rng.random() < s.event_rate) {
+        if (hadManual && !lt.events.some(e => e.manual)) this.endedManual.push(key);
+        if (this.rng.random() < s.event_rate && this.randomEvents) {
           const d = this.rng.integers(10, 60);
           lt.events.push({ remaining: d, duration: d, peak: this.rng.uniform(0.25, 0.6) });
         }
@@ -191,11 +207,14 @@
 
   // ---------- live session (live.py + dashboard/app.py) ----------
   class LiveState {
-    constructor(D, seed) { this.D = D; this.reset(seed); }
-    reset(seed) {
+    // Demo default: jams happen only where the presenter clicks.
+    constructor(D, seed) { this.D = D; this.reset(seed, false); }
+    reset(seed, randomJams) {
       const D = this.D, K = D.constants;
       this.seed = seed;
+      this.randomJams = randomJams;
       this.sim = new Simulator(D, seed);
+      this.sim.traffic.setRandomEvents(randomJams);
       this.sim.warmUp(50);
       const feats = D.features;
       this.ml = new Engine(o => predictOne(D.model.trees, feats.map(f => o.features[f])), K.switch_margin);
@@ -234,26 +253,39 @@
         }
         const h = this.history.get(flow);
         h.push(point); if (h.length > 180) h.shift();
-        if (ml.switched) this.pushEvent({ tick, kind: "switch", text: `${flow.replace("->", "→")}: ML moved to ${ml.pid}` });
+        if (ml.switched) this.pushEvent({ tick, flow, kind: "switch", text: `${flow.replace("->", "→")}: ML moved to ${ml.pid}` });
       }
+      for (const k of sim.traffic.endedManual) this.pushEvent({ tick: sim.tick, kind: "cleared", text: `Jam on ${k.replace("-", "–")} has cleared` });
       return out;
+    }
+    clearJams() {
+      const cleared = this.sim.traffic.clearManual();
+      this.pushEvent({ tick: this.sim.tick, kind: "cleared",
+        text: cleared.length ? "Cleared jams on " + cleared.map(k => k.replace("-", "–")).join(", ") : "No jams to clear" });
+    }
+    setRandomJams(enabled) {
+      this.randomJams = enabled;
+      this.sim.traffic.setRandomEvents(enabled);
+      this.pushEvent({ tick: this.sim.tick, kind: "info", text: "Random jams switched " + (enabled ? "on" : "off: only jams you add will happen") });
     }
     pushEvent(e) { this.events.unshift(e); if (this.events.length > 40) this.events.pop(); }
     congest(a, b, duration, peak) {
       const key = keyOf(a, b);
       this.sim.traffic.inject(key, duration, peak);
       const [x, y] = key.split("-");
-      this.pushEvent({ tick: this.sim.tick, kind: "congestion", text: `Congestion injected on ${x}–${y} (+${Math.round(peak * 100)}% load, ${duration} ticks)` });
+      this.pushEvent({ tick: this.sim.tick, kind: "congestion", text: `You jammed ${x}–${y} for ${duration} steps (+${Math.round(peak * 100)}% traffic)` });
     }
     snapshot(flow) {
       const D = this.D, K = D.constants, ft = this.last.get(flow), sim = this.sim;
       const byId = new Map(ft.candidates.map(c => [c.path, c]));
       const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
       return {
-        tick: ft.tick, seed: this.seed, flow,
+        tick: ft.tick, seed: this.seed, flow, random_jams: this.randomJams,
         links: [...sim.util].map(([k, u]) => {
           const lt = sim.traffic.links.get(k), [a, b] = k.split("-");
-          return { a, b, util: Math.round(u * 1000) / 1000, events: lt.events.length ? Math.max(...lt.events.map(e => e.remaining)) : 0 };
+          const mine = lt.events.filter(e => e.manual).map(e => e.remaining);
+          return { a, b, util: Math.round(u * 1000) / 1000, events: lt.events.length ? Math.max(...lt.events.map(e => e.remaining)) : 0,
+                   manual: mine.length ? Math.max(...mine) : 0 };
         }),
         choices: ft.choices,
         candidates: [...ft.candidates].sort((x, y) => y.predicted - x.predicted).map(c => ({
@@ -268,7 +300,7 @@
                    mean: r1(t.sum / t.n), poor_pct: r1(100 * t.poor / t.n) };
         }),
         history: this.history.get(flow),
-        events: this.events.slice(0, 15),
+        events: this.events.filter(e => !e.flow || e.flow === flow).slice(0, 15),
         poor_threshold: K.poor_quality,
       };
     }
@@ -299,8 +331,14 @@
             state.congest(body.a, body.b, Math.max(5, Math.min(200, body.duration || 40)), Math.max(0.1, Math.min(0.9, body.peak || 0.6)));
             return state.snapshot(flowOf(body.flow));
           }
+          case "/api/clear":
+            state.clearJams();
+            return state.snapshot(flowOf(body.flow));
+          case "/api/settings":
+            if ("random_jams" in body) state.setRandomJams(!!body.random_jams);
+            return state.snapshot(flowOf(body.flow));
           case "/api/reset":
-            state.reset(parseInt(body.seed ?? state.seed, 10));
+            state.reset(parseInt(body.seed ?? state.seed, 10), state.randomJams);
             return state.snapshot(flowOf(body.flow));
           default:
             throw new Error(`unknown route ${route}`);

@@ -29,6 +29,9 @@
           <option value="900">Slow</option><option value="400" selected>Normal</option><option value="120">Fast</option>
         </select>
       </label>
+      <label class="toggle" title="The simulator also creates traffic jams by itself, like a real network. Turn off for a controlled demo.">
+        <input id="random-jams" type="checkbox"> Random jams
+      </label>
       <button id="play" class="primary" type="button">Play</button>
       <button id="step" type="button">Step</button>
       <button id="reset" type="button" title="Restart with new random traffic">Reset</button>
@@ -41,8 +44,9 @@
       <div class="card-head">
         <h2>Network</h2>
         <div class="head-actions">
-          <button id="congest-backbone" class="warn" type="button">Congest AS200 backbone</button>
-          <span class="hint">or click any link</span>
+          <button id="congest-backbone" class="warn" type="button">Jam backbone (R5–R6–R7)</button>
+          <button id="clear-jams" class="plain" type="button">Clear jams</button>
+          <span class="hint">or click any link to jam it</span>
         </div>
       </div>
       <svg id="topology" viewBox="0 0 1000 560" role="img" aria-label="Network topology with link utilisation"></svg>
@@ -50,7 +54,7 @@
         <span><i class="swatch ml"></i>ML route</span>
         <span><i class="swatch cmp"></i><em id="cmp-name">OSPF</em> route</span>
         <span class="scale">Link load <i class="grad"></i> 0% → 100%</span>
-        <span><i class="pulse"></i>congestion episode</span>
+        <span><i class="jam-chip">⚡ 40</i>your jam (steps left)</span>
       </div>
     </section>
 
